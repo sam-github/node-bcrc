@@ -14,25 +14,46 @@ class BcrcObject : public node::ObjectWrap {
   BcrcObject(Crc* crc) : crc_(crc) {};
   ~BcrcObject() { delete crc_; };
 
-  void method() {
-    printf("method\n");
+  void reset() {
+    crc_->reset();
+  };
+
+  void process(const void* buffer, size_t byte_count) {
+    crc_->process_bytes(buffer, byte_count);
+  };
+
+  uintmax_t checksum() {
+    return crc_->checksum();
   };
 
   static v8::Handle<v8::Value> Basic(const v8::Arguments& args);
-  static v8::Handle<v8::Value> Method(const v8::Arguments& args);
+  static v8::Handle<v8::Value> Reset(const v8::Arguments& args);
+  static v8::Handle<v8::Value> Process(const v8::Arguments& args);
+  static v8::Handle<v8::Value> Checksum(const v8::Arguments& args);
 };
 
 void BcrcObject::Init(Handle<Object> exports) {
-  // Constructor
+  // export the constructors
+
   Local<FunctionTemplate> basicTemplate = FunctionTemplate::New(Basic);
   basicTemplate->SetClassName(String::NewSymbol("Bcrc"));
-  basicTemplate->InstanceTemplate()->SetInternalFieldCount(1);
+  basicTemplate->InstanceTemplate()->SetInternalFieldCount(3);
   // XXX field count unexplained... what is it? number of sets in the prototype?
 
-  // Prototype
+  // methods in prototype
   basicTemplate->PrototypeTemplate()->Set(
-    String::NewSymbol("method"),
-    FunctionTemplate::New(Method)->GetFunction()
+    String::NewSymbol("reset"),
+    FunctionTemplate::New(Reset)->GetFunction()
+  );
+
+  basicTemplate->PrototypeTemplate()->Set(
+    String::NewSymbol("process"),
+    FunctionTemplate::New(Process)->GetFunction()
+  );
+
+  basicTemplate->PrototypeTemplate()->Set(
+    String::NewSymbol("checksum"),
+    FunctionTemplate::New(Checksum)->GetFunction()
   );
 
   // XXX why persistent? it didn't need to be persistent before
@@ -110,14 +131,35 @@ Handle<Value> BcrcObject::Basic(const Arguments& args) {
   return args.This();
 }
 
-Handle<Value> BcrcObject::Method(const Arguments& args) {
+Handle<Value> BcrcObject::Reset(const Arguments& args) {
   HandleScope scope;
 
   BcrcObject* obj = ObjectWrap::Unwrap<BcrcObject>(args.This());
 
-  obj->method();
+  obj->reset();
 
   return args.This();
+}
+
+Handle<Value> BcrcObject::Process(const Arguments& args) {
+  HandleScope scope;
+
+  BcrcObject* obj = ObjectWrap::Unwrap<BcrcObject>(args.This());
+
+  obj->process(NULL, 0);
+
+  return args.This();
+}
+
+Handle<Value> BcrcObject::Checksum(const Arguments& args) {
+  HandleScope scope;
+
+  BcrcObject* obj = ObjectWrap::Unwrap<BcrcObject>(args.This());
+
+  uintmax_t checksum = obj->checksum();
+
+  Local<Number> num = Number::New(checksum);
+  return scope.Close(num);
 }
 
 void InitAll(Handle<Object> exports) {
