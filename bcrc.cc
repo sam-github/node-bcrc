@@ -76,24 +76,33 @@ Handle<Value> BcrcObject::Basic(const Arguments& args) {
     return scope.Close(Undefined());
   }
 
-    int bits = CheckInt32(args, 1);
-    int poly = CheckInt32(args, 2);
-    int initial = OptInt32(args, 3, 0);
-    int xor_ = OptInt32(args, 4, 0);
-    int reflect_input = CheckBool(args, 5);
-    int reflect_remainder = CheckBool(args, 6);
+  int bits = CheckInt32(args, 0);
+  int poly = CheckInt32(args, 1);
+  int initial = OptInt32(args, 2, 0);
+  int xor_ = OptInt32(args, 3, 0);
+  int reflect_input = CheckBool(args, 4);
+  int reflect_remainder = CheckBool(args, 5);
 
-    Crc* crc = NULL;
+  Crc* crc = NULL;
 
-    switch(bits) {
-        case  8: crc = new CrcBasic< 8>(poly, initial, xor_, reflect_input, reflect_remainder); break;
-        case 16: crc = new CrcBasic<16>(poly, initial, xor_, reflect_input, reflect_remainder); break;
-        case 24: crc = new CrcBasic<24>(poly, initial, xor_, reflect_input, reflect_remainder); break;
-        case 32: crc = new CrcBasic<32>(poly, initial, xor_, reflect_input, reflect_remainder); break;
-        // XXX throw error. default: return luaL_argerror(L, 2, "unsupported crc bit width");
-    ThrowException(Exception::TypeError(String::New("Unsupported crc bit width")));
-    return scope.Close(Undefined());
-    }
+  switch(bits) {
+    case  8:
+      crc = new CrcBasic< 8>(poly, initial, xor_, reflect_input, reflect_remainder);
+      break;
+    case 16:
+      crc = new CrcBasic<16>(poly, initial, xor_, reflect_input, reflect_remainder);
+      break;
+    case 24:
+      crc = new CrcBasic<24>(poly, initial, xor_, reflect_input, reflect_remainder);
+      break;
+    case 32:
+      crc = new CrcBasic<32>(poly, initial, xor_, reflect_input, reflect_remainder);
+      break;
+    default:
+      // XXX throw error. default: return luaL_argerror(L, 2, "unsupported crc bit width");
+      ThrowException(Exception::TypeError(String::New("Unsupported crc bit width")));
+      return scope.Close(Undefined());
+  }
 
   BcrcObject* obj = new BcrcObject(crc);
   obj->Wrap(args.This());
