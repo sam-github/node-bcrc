@@ -27,7 +27,7 @@ void BcrcObject::Init(Handle<Object> exports) {
   Local<FunctionTemplate> basicTemplate = FunctionTemplate::New(Basic);
   basicTemplate->SetClassName(String::NewSymbol("Bcrc"));
   basicTemplate->InstanceTemplate()->SetInternalFieldCount(1);
-    // XXX field count unexplained... what is it? number of sets in the prototype?
+  // XXX field count unexplained... what is it? number of sets in the prototype?
 
   // Prototype
   basicTemplate->PrototypeTemplate()->Set(
@@ -35,6 +35,7 @@ void BcrcObject::Init(Handle<Object> exports) {
     FunctionTemplate::New(Method)->GetFunction()
   );
 
+  // XXX why persistent? it didn't need to be persistent before
   Persistent<Function> basicConstructor =
     Persistent<Function>::New(basicTemplate->GetFunction());
 
@@ -63,6 +64,7 @@ int32_t OptInt32(const Arguments& args, int arg, int32_t def)
 
 int CheckBool(const Arguments& args, int arg)
 {
+// XXX does this do what I think?
   return args[arg]->BooleanValue();
 }
 
