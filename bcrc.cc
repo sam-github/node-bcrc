@@ -5,42 +5,44 @@
 using namespace v8;
 
 class BcrcObject : public node::ObjectWrap {
- public:
-  static void Init(v8::Handle<v8::Object> target);
+  public:
+    static void Init(v8::Handle<v8::Object> target);
 
- private:
-  Crc* crc_;
+  private:
+    Crc* crc_;
 
-  BcrcObject(Crc* crc) : crc_(crc) {};
-  ~BcrcObject() { delete crc_; };
 
-  void reset() {
-    crc_->reset();
-  };
+    BcrcObject(Crc* crc) : crc_(crc) {};
+    ~BcrcObject() { delete crc_; };
 
-  void process(const void* buffer, size_t byte_count) {
-    crc_->process_bytes(buffer, byte_count);
-  };
+    void reset() {
+      crc_->reset();
+    };
 
-  uintmax_t checksum() {
-    return crc_->checksum();
-  };
+    void process(const void* buffer, size_t byte_count) {
+      crc_->process_bytes(buffer, byte_count);
+    };
 
-  static v8::Handle<v8::Value> Basic(const v8::Arguments& args);
-  static v8::Handle<v8::Value> Reset(const v8::Arguments& args);
-  static v8::Handle<v8::Value> Process(const v8::Arguments& args);
-  static v8::Handle<v8::Value> Checksum(const v8::Arguments& args);
+    uintmax_t checksum() {
+      return crc_->checksum();
+    };
+
+    static v8::Handle<v8::Value> Basic(const v8::Arguments& args);
+    static v8::Handle<v8::Value> Reset(const v8::Arguments& args);
+    static v8::Handle<v8::Value> Process(const v8::Arguments& args);
+    static v8::Handle<v8::Value> Checksum(const v8::Arguments& args);
 };
 
 void BcrcObject::Init(Handle<Object> exports) {
+  HandleScope scope;
+
   // export the constructors
-
   Local<FunctionTemplate> basicTemplate = FunctionTemplate::New(Basic);
-  basicTemplate->SetClassName(String::NewSymbol("Bcrc"));
-  basicTemplate->InstanceTemplate()->SetInternalFieldCount(3);
-  // XXX field count unexplained... what is it? number of sets in the prototype?
+  basicTemplate->SetClassName(String::NewSymbol("Crc"));
 
-  // methods in prototype
+  basicTemplate->InstanceTemplate()->SetInternalFieldCount(1);
+
+  // set methods in prototype
   basicTemplate->PrototypeTemplate()->Set(
     String::NewSymbol("reset"),
     FunctionTemplate::New(Reset)->GetFunction()
@@ -56,12 +58,12 @@ void BcrcObject::Init(Handle<Object> exports) {
     FunctionTemplate::New(Checksum)->GetFunction()
   );
 
-  // XXX why persistent? it didn't need to be persistent before
-  Persistent<Function> basicConstructor =
-    Persistent<Function>::New(basicTemplate->GetFunction());
+  Local<Function> basicConstructor =
+    Local<Function>::New(basicTemplate->GetFunction());
 
   exports->Set(String::NewSymbol("Basic"), basicConstructor);
 }
+
 
 int32_t CheckInt32(const Arguments& args, int arg)
 {
@@ -85,9 +87,10 @@ int32_t OptInt32(const Arguments& args, int arg, int32_t def)
 
 int CheckBool(const Arguments& args, int arg)
 {
-// XXX does this do what I think?
   return args[arg]->BooleanValue();
 }
+
+
 
 Handle<Value> BcrcObject::Basic(const Arguments& args) {
   HandleScope scope;
@@ -103,7 +106,6 @@ Handle<Value> BcrcObject::Basic(const Arguments& args) {
   int xor_ = OptInt32(args, 3, 0);
   int reflect_input = CheckBool(args, 4);
   int reflect_remainder = CheckBool(args, 5);
-
   Crc* crc = NULL;
 
   switch(bits) {
@@ -144,9 +146,15 @@ Handle<Value> BcrcObject::Reset(const Arguments& args) {
 Handle<Value> BcrcObject::Process(const Arguments& args) {
   HandleScope scope;
 
+  Local<String> arg0 = args[0]->ToString();
+
+  char buf[arg0->Length()]; // XXX gcc only?
+
+  arg0->WriteAscii(buf);
+
   BcrcObject* obj = ObjectWrap::Unwrap<BcrcObject>(args.This());
 
-  obj->process(NULL, 0);
+  obj->process(buf, arg0->Length());
 
   return args.This();
 }
@@ -159,6 +167,7 @@ Handle<Value> BcrcObject::Checksum(const Arguments& args) {
   uintmax_t checksum = obj->checksum();
 
   Local<Number> num = Number::New(checksum);
+
   return scope.Close(num);
 }
 
