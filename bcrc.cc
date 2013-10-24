@@ -28,6 +28,7 @@ class BcrcObject : public node::ObjectWrap {
     };
 
     static v8::Handle<v8::Value> Basic(const v8::Arguments& args);
+
     static v8::Handle<v8::Value> Reset(const v8::Arguments& args);
     static v8::Handle<v8::Value> Process(const v8::Arguments& args);
     static v8::Handle<v8::Value> Checksum(const v8::Arguments& args);
@@ -100,12 +101,17 @@ Handle<Value> BcrcObject::Basic(const Arguments& args) {
     return scope.Close(Undefined());
   }
 
-  int bits = CheckInt32(args, 0);
-  int poly = CheckInt32(args, 1);
-  int initial = OptInt32(args, 2, 0);
-  int xor_ = OptInt32(args, 3, 0);
-  int reflect_input = CheckBool(args, 4);
-  int reflect_remainder = CheckBool(args, 5);
+  if (!args[0]->IsNumber() || !args[1]->IsNumber()) {
+    ThrowException(Exception::TypeError(String::New("Wrong type of arguments")));
+    return scope.Close(Undefined());
+  }
+
+  int32_t bits = args[0]->Int32Value();
+  int32_t poly = args[1]->Int32Value();
+  int32_t initial = args[2]->Int32Value();
+  int32_t xor_ = args[3]->Int32Value();
+  int reflect_input = args[4]->BooleanValue();
+  int reflect_remainder = args[5]->BooleanValue();
   Crc* crc = NULL;
 
   switch(bits) {
@@ -122,7 +128,6 @@ Handle<Value> BcrcObject::Basic(const Arguments& args) {
       crc = new CrcBasic<32>(poly, initial, xor_, reflect_input, reflect_remainder);
       break;
     default:
-      // XXX throw error. default: return luaL_argerror(L, 2, "unsupported crc bit width");
       ThrowException(Exception::TypeError(String::New("Unsupported crc bit width")));
       return scope.Close(Undefined());
   }
