@@ -1,4 +1,4 @@
-var bcrc = require('./build/Release/bcrc');
+var bcrc = require('./');
 
 var obj = new bcrc.Basic(8, 0x8005);
 console.log( "bcrc", obj );

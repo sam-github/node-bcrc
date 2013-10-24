@@ -1,8 +1,6 @@
 {
-  "name": "object_wrap",
+  "name": "bcrc",
   "version": "0.0.0",
-  "description": "Node.js Addons Example #6",
-  "main": "addon.js",
-  "private": true,
-  "gypfile": true
+  "description": "crc generator",
+  "main": "bcrc.js"
 }
